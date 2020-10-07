@@ -1,16 +1,16 @@
 /*
  Copyright 2009-2011 Urban Airship Inc. All rights reserved.
-
+ 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:
-
+ 
  1. Redistributions of source code must retain the above copyright notice, this
  list of conditions and the following disclaimer.
-
+ 
  2. Redistributions in binaryform must reproduce the above copyright notice,
  this list of conditions and the following disclaimer in the documentation
  and/or other materials provided withthe distribution.
-
+ 
  THIS SOFTWARE IS PROVIDED BY THE URBAN AIRSHIP INC``AS IS'' AND ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
@@ -54,11 +54,11 @@
 -(void)initRegistration;
 {
     NSString * registrationToken = [[FIRInstanceID instanceID] token];
-
+    
     if (registrationToken != nil) {
         NSLog(@"FCM Registration Token: %@", registrationToken);
         [self setFcmRegistrationToken: registrationToken];
-
+        
         id topics = [self fcmTopics];
         if (topics != nil) {
             for (NSString *topic in topics) {
@@ -67,12 +67,12 @@
                 [pubSub subscribeToTopic:topic];
             }
         }
-
+        
         [self registerWithToken:registrationToken];
     } else {
         NSLog(@"FCM token is null");
     }
-
+    
 }
 
 //  FCM refresh token
@@ -112,7 +112,7 @@
 - (void)unregister:(CDVInvokedUrlCommand*)command;
 {
     NSArray* topics = [command argumentAtIndex:0];
-
+    
     if (topics != nil) {
         id pubSub = [FIRMessaging messaging];
         for (NSString *topic in topics) {
@@ -128,7 +128,7 @@
 - (void)subscribe:(CDVInvokedUrlCommand*)command;
 {
     NSString* topic = [command argumentAtIndex:0];
-
+    
     if (topic != nil) {
         NSLog(@"subscribe from topic: %@", topic);
         id pubSub = [FIRMessaging messaging];
@@ -144,7 +144,7 @@
 - (void)unsubscribe:(CDVInvokedUrlCommand*)command;
 {
     NSString* topic = [command argumentAtIndex:0];
-
+    
     if (topic != nil) {
         NSLog(@"unsubscribe from topic: %@", topic);
         id pubSub = [FIRMessaging messaging];
@@ -165,9 +165,9 @@
     if (([voipArg isKindOfClass:[NSString class]] && [voipArg isEqualToString:@"true"]) || [voipArg boolValue]) {
         [self.commandDelegate runInBackground:^ {
             NSLog(@"Push Plugin VoIP set to true");
-
+            
             self.callbackId = command.callbackId;
-
+            
             PKPushRegistry *pushRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
             pushRegistry.delegate = self;
             pushRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
@@ -177,23 +177,23 @@
         [[NSNotificationCenter defaultCenter]
          addObserver:self selector:@selector(onTokenRefresh)
          name:kFIRInstanceIDTokenRefreshNotification object:nil];
-
+        
         [[NSNotificationCenter defaultCenter]
          addObserver:self selector:@selector(sendDataMessageFailure:)
          name:FIRMessagingSendErrorNotification object:nil];
-
+        
         [[NSNotificationCenter defaultCenter]
          addObserver:self selector:@selector(sendDataMessageSuccess:)
          name:FIRMessagingSendSuccessNotification object:nil];
-
+        
         [[NSNotificationCenter defaultCenter]
          addObserver:self selector:@selector(didDeleteMessagesOnServer)
          name:FIRMessagingMessagesDeletedNotification object:nil];
-
+        
         [self.commandDelegate runInBackground:^ {
             NSLog(@"Push Plugin register called");
             self.callbackId = command.callbackId;
-
+            
             NSArray* topics = [iosOptions objectForKey:@"topics"];
             [self setFcmTopics:topics];
 
@@ -203,17 +203,17 @@
             id soundArg = [iosOptions objectForKey:@"sound"];
             id alertArg = [iosOptions objectForKey:@"alert"];
             id clearBadgeArg = [iosOptions objectForKey:@"clearBadge"];
-
+            
             if (([badgeArg isKindOfClass:[NSString class]] && [badgeArg isEqualToString:@"true"]) || [badgeArg boolValue])
             {
                 authorizationOptions |= UNAuthorizationOptionBadge;
             }
-
+            
             if (([soundArg isKindOfClass:[NSString class]] && [soundArg isEqualToString:@"true"]) || [soundArg boolValue])
             {
                 authorizationOptions |= UNAuthorizationOptionSound;
             }
-
+            
             if (([alertArg isKindOfClass:[NSString class]] && [alertArg isEqualToString:@"true"]) || [alertArg boolValue])
             {
                 authorizationOptions |= UNAuthorizationOptionAlert;
@@ -228,9 +228,9 @@
                 [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
             }
             NSLog(@"PushPlugin.register: clear badge is set to %d", clearBadge);
-
+            
             isInline = NO;
-
+            
             NSLog(@"PushPlugin.register: better button setup");
             // setup action buttons
             NSMutableSet<UNNotificationCategory *> *categories = [[NSMutableSet alloc] init];
@@ -239,7 +239,7 @@
                 for (id key in categoryOptions) {
                     NSLog(@"categories: key %@", key);
                     id category = [categoryOptions objectForKey:key];
-
+                    
                     id yesButton = [category objectForKey:@"yes"];
                     UNNotificationAction *yesAction;
                     if (yesButton != nil && [yesButton  isKindOfClass:[NSDictionary class]]) {
@@ -278,7 +278,7 @@
                     NSLog(@"Adding category %@", key);
                     [categories addObject:notificationCategory];
                 }
-
+                
             }
 
             UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
@@ -294,14 +294,14 @@
 
             // Read GoogleService-Info.plist
             NSString *path = [[NSBundle mainBundle] pathForResource:@"GoogleService-Info" ofType:@"plist"];
-
+            
             // Load the file content and read the data into arrays
             NSDictionary *dict = [[NSDictionary alloc] initWithContentsOfFile:path];
             fcmSenderId = [dict objectForKey:@"GCM_SENDER_ID"];
             BOOL isGcmEnabled = [[dict valueForKey:@"IS_GCM_ENABLED"] boolValue];
-
+            
             NSLog(@"FCM Sender ID %@", fcmSenderId);
-
+            
             //  GCM options
             [self setFcmSenderId: fcmSenderId];
             if(isGcmEnabled && [[self fcmSenderId] length] > 0) {
@@ -317,7 +317,7 @@
                 [self setUsesFCM:NO];
             }
             id fcmSandboxArg = [iosOptions objectForKey:@"fcmSandbox"];
-
+            
             [self setFcmSandbox:@NO];
             if ([self usesFCM] &&
                 (([fcmSandboxArg isKindOfClass:[NSString class]] && [fcmSandboxArg isEqualToString:@"true"]) ||
@@ -326,14 +326,14 @@
                 NSLog(@"Using FCM Sandbox");
                 [self setFcmSandbox:@YES];
             }
-
+            
             if (notificationMessage) {            // if there is a pending startup notification
                 dispatch_async(dispatch_get_main_queue(), ^{
                     // delay to allow JS event handlers to be setup
                     [self performSelector:@selector(notificationReceived) withObject:nil afterDelay: 0.5];
                 });
             }
-
+            
         }];
     }
 }
@@ -416,21 +416,21 @@
 
 - (void)notificationReceived {
     NSLog(@"Notification received");
-
+    
     if (notificationMessage && self.callbackId != nil)
     {
         NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:4];
         NSMutableDictionary* additionalData = [NSMutableDictionary dictionaryWithCapacity:4];
-
-
+        
+        
         for (id key in notificationMessage) {
             if ([key isEqualToString:@"aps"]) {
                 id aps = [notificationMessage objectForKey:@"aps"];
-
+                
                 for(id key in aps) {
                     NSLog(@"Push Plugin key: %@", key);
                     id value = [aps objectForKey:key];
-
+                    
                     if ([key isEqualToString:@"alert"]) {
                         if ([value isKindOfClass:[NSDictionary class]]) {
                             for (id messageKey in value) {
@@ -463,26 +463,26 @@
                 [additionalData setObject:[notificationMessage objectForKey:key] forKey:key];
             }
         }
-
+        
         if (isInline) {
             [additionalData setObject:[NSNumber numberWithBool:YES] forKey:@"foreground"];
         } else {
             [additionalData setObject:[NSNumber numberWithBool:NO] forKey:@"foreground"];
         }
-
+        
         if (coldstart) {
             [additionalData setObject:[NSNumber numberWithBool:YES] forKey:@"coldstart"];
         } else {
             [additionalData setObject:[NSNumber numberWithBool:NO] forKey:@"coldstart"];
         }
-
+        
         [message setObject:additionalData forKey:@"additionalData"];
-
+        
         // send notification message
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
         [pluginResult setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
-
+        
         self.coldstart = NO;
         self.notificationMessage = nil;
     }
@@ -514,9 +514,9 @@
 {
     NSMutableDictionary* options = [command.arguments objectAtIndex:0];
     int badge = [[options objectForKey:@"badge"] intValue] ?: 0;
-
+    
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:badge];
-
+    
     NSString* message = [NSString stringWithFormat:@"app badge count set to %d", badge];
     CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
     [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
@@ -525,7 +525,7 @@
 - (void)getApplicationIconBadgeNumber:(CDVInvokedUrlCommand *)command
 {
     NSInteger badge = [UIApplication sharedApplication].applicationIconBadgeNumber;
-
+    
     CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:(int)badge];
     [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
 }
@@ -533,7 +533,7 @@
 - (void)clearAllNotifications:(CDVInvokedUrlCommand *)command
 {
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
-
+    
     NSString* message = [NSString stringWithFormat:@"cleared all notifications"];
     CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
     [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
@@ -580,17 +580,17 @@
 {
     NSString        *errorMessage = (error) ? [NSString stringWithFormat:@"%@ - %@", message, [error localizedDescription]] : message;
     CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMessage];
-
+    
     [self.commandDelegate sendPluginResult:commandResult callbackId:myCallbackId];
 }
 
 -(void) finish:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Push Plugin finish called");
-
+    
     [self.commandDelegate runInBackground:^ {
         NSString* notId = [command.arguments objectAtIndex:0];
-
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSTimer scheduledTimerWithTimeInterval:0.1
                                              target:self
@@ -598,7 +598,7 @@
                                            userInfo:notId
                                             repeats:NO];
         });
-
+        
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
@@ -607,9 +607,9 @@
 -(void)stopBackgroundTask:(NSTimer*)timer
 {
     UIApplication *app = [UIApplication sharedApplication];
-
+    
     NSLog(@"Push Plugin stopBackgroundTask called");
-
+    
     if (handlerObj) {
         NSLog(@"Push Plugin handlerObj");
         completionHandler = [handlerObj[[timer userInfo]] copy];
@@ -628,14 +628,14 @@
         NSLog(@"VoIPPush Plugin register error - No device token:");
         return;
     }
-
+    
     NSLog(@"VoIPPush Plugin register success");
     const unsigned *tokenBytes = [credentials.token bytes];
     NSString *sToken = [NSString stringWithFormat:@"%08x%08x%08x%08x%08x%08x%08x%08x",
                         ntohl(tokenBytes[0]), ntohl(tokenBytes[1]), ntohl(tokenBytes[2]),
                         ntohl(tokenBytes[3]), ntohl(tokenBytes[4]), ntohl(tokenBytes[5]),
                         ntohl(tokenBytes[6]), ntohl(tokenBytes[7])];
-
+    
     [self registerWithToken:sToken];
 }
 
@@ -691,3 +691,4 @@
 }
 
 @end
+
